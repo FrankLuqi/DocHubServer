@@ -34,7 +34,7 @@ public class UrlFilterInvocationSecurityMetadataSource implements FilterInvocati
     public Collection<ConfigAttribute> getAttributes(Object o) throws IllegalArgumentException {
         System.out.println("过滤器：UrlFilterInvocationSecurityMetadataSource");
         String requestUrl = ((FilterInvocation)o).getRequestUrl();//获取当前请求的url地址
-        if ("/login".equals(requestUrl) || "/user".equals(requestUrl) || "/checkUsername".equals(requestUrl))
+        if ("/login".equals(requestUrl) || "/user".equals(requestUrl) || "/checkUsername".equals(requestUrl) || "/userface".equals(requestUrl))
         {
             return null;//登录页不需要任何权限
         }

@@ -1,7 +1,7 @@
 package com.example.dochubserver.bean;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.sun.org.glassfish.gmbal.NameValue;
+//import com.sun.org.glassfish.gmbal.NameValue;
 import lombok.Data;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -29,4 +29,7 @@ public class OwnedRole {
     public OwnedRole(){
 
     }
+
+
+
 }

@@ -74,10 +74,10 @@ public class LoginService {
         newUser.setUserface(String.format("http://images.nowcoder.com/head/%dt.png", new Random().nextInt(1000)));
         newUser = userService.save(newUser);
 
-        OwnedRole ownedRole = new OwnedRole();
-        ownedRole.setUser(newUser);
-        ownedRole.setDepartmentRoleId(UsuallyUtil.generateRoleNeedsId(1));
-        owendRoleService.save(ownedRole);
+//        OwnedRole ownedRole = new OwnedRole();
+//        ownedRole.setUser(newUser);
+//        ownedRole.setDepartmentRoleId(UsuallyUtil.generateRoleNeedsId(1));
+//        owendRoleService.save(ownedRole);
 
         map.put("code",ResponseType.Success);
         map.put("message","注册成功");

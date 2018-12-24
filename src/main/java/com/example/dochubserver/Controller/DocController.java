@@ -103,4 +103,76 @@ public class DocController {
             e.printStackTrace();
         }
     }
+
+    /**
+     * 获取文件列表
+     * @param request
+     * @return
+     */
+    @PostMapping(value = "/getDocList")
+    @ResponseBody
+    public String getDocList(HttpServletRequest request)
+    {
+        String userId = (String)request.getAttribute("userId");
+        String token = request.getParameter("token");
+        Boolean himself = Boolean.parseBoolean(request.getParameter("himself"));
+//        return docService.getDocList(Long.parseLong(userId),himself,token);
+        Future<String> future = asyncTask.getDocList(Long.parseLong(userId),himself,token);
+        try {
+            return future.get();
+        }catch (Exception e)
+        {
+            return "错误"+e.getMessage();
+        }
+    }
+
+    /**
+     * 删除文件
+     * @param request
+     * @return
+     */
+    @PostMapping(value = "/deleteDoc")
+    @ResponseBody
+    public String deleteDoc(HttpServletRequest request)
+    {
+        String userId = (String)request.getAttribute("userId");
+        String docId = request.getParameter("docId");
+        Future<String> future = asyncTask.deleteDoc(Long.parseLong(docId),Long.parseLong(userId));
+        try {
+            return future.get();
+        }catch (Exception e)
+        {
+            return "错误"+e.getMessage();
+        }
+    }
+
+    @PostMapping(value = "/changeDocPermission")
+    @ResponseBody
+    public String changePower(HttpServletRequest request)
+    {
+        String userId = (String)request.getAttribute("userId");
+        String docId = request.getParameter("docId");
+        String[] powers = request.getParameterValues("power");
+        Future<String> future = asyncTask.changePower(Long.parseLong(docId),Long.parseLong(userId),powers);
+        try {
+            return future.get();
+        }catch (Exception e)
+        {
+            return "错误"+e.getMessage();
+        }
+    }
+
+    @PostMapping(value = "/getDocReportByCategory")
+    @ResponseBody
+    public String getDocReportByCategory(HttpServletRequest request)
+    {
+        Future<String> future = asyncTask.getDocReportByCategory();
+        try {
+            return future.get();
+        }catch (Exception e)
+        {
+            return "错误"+e.getMessage();
+        }
+    }
+
 }

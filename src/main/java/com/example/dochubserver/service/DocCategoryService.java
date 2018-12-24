@@ -7,6 +7,7 @@ import com.example.dochubserver.bean.Doc;
 import com.example.dochubserver.bean.DocCategory;
 import com.example.dochubserver.repository.DocCategoryRepository;
 import com.example.dochubserver.repository.DocRepository;
+import com.example.dochubserver.utils.ResponseType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -70,6 +71,8 @@ public class DocCategoryService {
         map.put("id",String.valueOf(id));
         map.put("code",code);
         map.put("name",docCategoryName);
+        map.put("code",ResponseType.Success);
+        map.put("msg","添加文件类别成功");
         return map;
     }
 

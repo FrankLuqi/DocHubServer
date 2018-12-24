@@ -85,7 +85,7 @@ public class FunctionService {
             jsonObject.put("id",function.getId());
             jsonObject.put("name",function.getName());
             jsonObject.put("identity",function.getIdentity());
-
+            StringBuffer roleName2 = new StringBuffer();
             JSONArray array = new JSONArray();
             if (functionPermissionRepository.findByFunctionId(function.getId())!=null)
             {
@@ -96,17 +96,19 @@ public class FunctionService {
                     StringBuffer roleName = new StringBuffer();
                     Map<String,Long> map = UsuallyUtil.parseDepartmentRoleId(functionPermission.getDepartmentRoleId());
                     if (map.containsKey("DepartmentId"))
-                        roleName.append(departmentsService.findDepartmentById(map.get("DepartmentId"))+" ");
+                        roleName.append(departmentsService.findDepartmentById(map.get("DepartmentId")).getName()+" ");
                     if (map.containsKey("RoleId"))
-                        roleName.append(roleService.findRoleById(map.get("RoleId")));
-                    jsonObject.put("name",roleName);
-                    array.add(jsonObject);
+                        roleName.append(roleService.findRoleById(map.get("RoleId")).getName());
+                    object.put("rolename",roleName);
+                    roleName.append(" ");
+                    roleName2.append(roleName);
+                    array.add(object.toString());
                 }
-                jsonObject.put("role",array.toJSONString());
+                jsonObject.put("role",array);
             }
             else
                 jsonObject.put("role","");
-
+            jsonObject.put("rolename",roleName2.toString());
             jsonArray.add(jsonObject);
         }
         return jsonArray.toJSONString();

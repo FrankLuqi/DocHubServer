@@ -61,7 +61,7 @@ public class RoleService {
         role = save(role);
         map.put("code",ResponseType.Success);
         map.put("msg","添加角色成功");
-        map.put("Id",role.getId());
+        map.put("id",role.getId());
         map.put("name",role.getName());
         return map;
     }

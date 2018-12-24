@@ -10,12 +10,15 @@ import com.example.dochubserver.utils.JedisAdapter;
 import com.example.dochubserver.utils.ResponseType;
 import com.example.dochubserver.utils.UsuallyUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
 
 @Service
 public class UserService {
@@ -37,6 +40,13 @@ public class UserService {
 
     @Autowired
     RoleService roleService;
+
+    @Value("${com.DOMAIN}")
+    private String DOMAIN;
+
+
+    @Value("${com.docDir}")
+    private String docDir;
 
     public User save(User user)
     {
@@ -122,6 +132,8 @@ public class UserService {
             JSONObject object = new JSONObject();
             object.put("name",user.getUsername());
             JSONArray array = new JSONArray();
+            StringBuffer userRoles = new StringBuffer();
+            userRoles.append(" ");
             if (user.getOwnedRoles()!=null)
             {
                 for (OwnedRole ownedRole : user.getOwnedRoles())
@@ -131,11 +143,11 @@ public class UserService {
                     StringBuffer roleName = new StringBuffer();
                     Map<String,Long> map = UsuallyUtil.parseDepartmentRoleId(ownedRole.getDepartmentRoleId());
                     if (map.containsKey("DepartmentId"))
-                        roleName.append(departmentsService.findDepartmentById(map.get("DepartmentId"))+" ");
+                        roleName.append(departmentsService.findDepartmentById(map.get("DepartmentId")).getName()+" ");
                     if (map.containsKey("RoleId"))
-                        roleName.append(roleService.findRoleById(map.get("RoleId")));
+                        roleName.append(roleService.findRoleById(map.get("RoleId")).getName());
                     jsonObject.put("name",roleName);
-
+                    userRoles.append(roleName);
                     array.add(jsonObject);
                 }
                 object.put("role",array.toJSONString());
@@ -144,9 +156,57 @@ public class UserService {
                 object.put("role","");
 
             object.put("id",user.getId());
+            object.put("userRole",userRoles.toString());
             jsonArray.add(object);
         }
         return jsonArray.toJSONString();
+    }
+
+    /**
+     * 修改用户头像
+     * @param request
+     * @param userId
+     * @return
+     */
+    public Map<String,Object> uoloadUserface(HttpServletRequest request, Long userId)
+    {
+        Map<String,Object> map = new HashMap<>();
+        Part part = null;
+        try{
+            part = request.getPart("file");
+        }catch (Exception e)
+        {
+            map.put("code",ResponseType.Error);
+            map.put("msg","修改失败");
+            return map;
+        }
+        //得到上传的文件名找到图片后缀名点的位置
+        int dotpos = part.getSubmittedFileName().lastIndexOf(".");
+        if (dotpos<=0)
+        {
+            map.put("code",ResponseType.Error);
+            map.put("msg","修改失败");
+            return map;
+        }
+        //得到后缀名并将大写转换为小写
+        String fileext = part.getSubmittedFileName().substring(dotpos+1).toLowerCase();
+        String filename = UUID.randomUUID().toString().replaceAll("-","")+"."+fileext;
+        try{
+            //保存文件到本地
+            Files.copy(part.getInputStream(),new File(docDir+filename).toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }catch (Exception e)
+        {
+            map.put("code",ResponseType.Error);
+            map.put("msg","修改失败");
+            return map;
+        }
+        User user = userRepository.findById(userId).get();
+        user.setUserface(DOMAIN+"userface?name="+filename);
+        userRepository.save(user);
+        map.put("code",ResponseType.Success);
+        map.put("msg","修改成功");
+        map.put("userFace",DOMAIN+"userface?name="+filename);
+        return map;
     }
 
 

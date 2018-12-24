@@ -47,6 +47,9 @@ public class AsyncTask {
     @Autowired
     DocService docService;
 
+    @Autowired
+    DocPermissionService docPermissionService;
+
     /**
      * 注册
      * @param username
@@ -344,5 +347,56 @@ public class AsyncTask {
         return new AsyncResult<String>(response);
     }
 
+    /**
+     * 获取文件列表
+     * @param userId
+     * @param himself
+     * @return
+     */
+    @Async
+    public Future<String> getDocList(Long userId,Boolean himself,String token)
+    {
+        String response = docService.getDocList(userId,himself,token);
+        return new AsyncResult<String>(response);
+    }
 
+    /**
+     * 删除文件
+     * @param docId
+     * @param userId
+     * @return
+     */
+    @Async
+    public Future<String> deleteDoc(Long docId,Long userId)
+    {
+        String response = UsuallyUtil.getJsonString(docService.deleteDoc(docId,userId));
+        return new AsyncResult<String>(response);
+    }
+
+    /**
+     * 修改文件权限
+     * @param docId
+     * @param userId
+     * @return
+     */
+    @Async
+    public Future<String> changePower(Long docId,Long userId,String[] powers)
+    {
+        String response = UsuallyUtil.getJsonString(docPermissionService.changePower(docId,userId,powers));
+        return new AsyncResult<String>(response);
+    }
+
+    @Async
+    public Future<String> uoloadUserface(HttpServletRequest request,Long userId)
+    {
+        String response = UsuallyUtil.getJsonString(userService.uoloadUserface(request,userId));
+        return new AsyncResult<String>(response);
+    }
+
+    @Async
+    public Future<String> getDocReportByCategory()
+    {
+        String response = docService.getDocReportByCategory();
+        return new AsyncResult<String>(response);
+    }
 }

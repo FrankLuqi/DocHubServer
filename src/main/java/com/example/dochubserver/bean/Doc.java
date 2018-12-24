@@ -33,4 +33,13 @@ public class Doc {
     private String downloadUrl; //下载文件时文件在服务器的地址
 
     private String previewUrl; //预览文件时文件在服务器的地址
+
+    private String uploadUser;//上传者用户名（反规范化）
+
+    private String category; //文件所属类别名称（反规范化）
+
+    private String permission;//权限名称列表 （反规范化）
+
+    @Transient
+    private String uploadDate;//上传时间
 }

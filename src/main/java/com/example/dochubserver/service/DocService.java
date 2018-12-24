@@ -7,10 +7,7 @@ import com.artofsolving.jodconverter.DocumentConverter;
 import com.artofsolving.jodconverter.openoffice.connection.OpenOfficeConnection;
 import com.artofsolving.jodconverter.openoffice.connection.SocketOpenOfficeConnection;
 import com.artofsolving.jodconverter.openoffice.converter.OpenOfficeDocumentConverter;
-import com.example.dochubserver.bean.Doc;
-import com.example.dochubserver.bean.DocPermission;
-import com.example.dochubserver.bean.OwnedRole;
-import com.example.dochubserver.bean.Power;
+import com.example.dochubserver.bean.*;
 import com.example.dochubserver.repository.DocCategoryRepository;
 import com.example.dochubserver.repository.DocPermissionRepository;
 import com.example.dochubserver.repository.DocRepository;
@@ -29,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 
@@ -136,7 +134,6 @@ public class DocService {
                 {
                     e.printStackTrace();
                 }
-
             }
             else
             {
@@ -147,9 +144,11 @@ public class DocService {
 
         doc.setDocName(part.getSubmittedFileName());
         doc.setCategoryId(docCategoryId);
+        doc.setCategory(docCategoryRepository.findById(docCategoryId).get().getName());
         doc.setDate(new Date());
         doc.setDownloads(Long.parseLong("0"));
         doc.setUploadUserid(userId);
+        doc.setUploadUser(userService.findByUserId(userId).getUsername());
         if (powers.length==1&&powers[0].equals(""))
             doc.setOpen(1); // 文件公开
         else
@@ -159,12 +158,20 @@ public class DocService {
 
         if (doc.getOpen()==0)
         {
+            StringBuffer stringBuffer = new StringBuffer();
             for (String p:powers)
             {
                 Power power = JSON.parseObject(p,Power.class);
-                docPermissionService.addDocPermission(doc.getId(),Long.parseLong(power.roleId),Long.parseLong(power.departmentId),power.powerName);
+                if (!power.departmentId.equals(""))
+                    stringBuffer.append(departmentsService.findDepartmentById(Long.parseLong(power.departmentId)).getName());
+                if (!power.roleId.equals(""))
+                    stringBuffer.append(roleService.findRoleById(Long.parseLong(power.roleId)).getName());
+                stringBuffer.append("  ");
+                docPermissionService.addDocPermission(doc.getId(),!power.roleId.equals("")?Long.parseLong(power.roleId):null,!power.departmentId.equals("")?Long.parseLong(power.departmentId):null,power.powerName);
             }
+            doc.setPermission(stringBuffer.toString());
         }
+        docRepository.save(doc);
         map.put("code",ResponseType.Success);
         map.put("msg","上传成功");
         return map;
@@ -188,7 +195,7 @@ public class DocService {
             map.put("msg","该文件不存在");
             return map;
         }
-        if (doc.getOpen()==0)
+        if (doc.getOpen()==0&&doc.getUploadUserid()!=userId)
         {
             Boolean hasPermisson = false;
             List<DocPermission> docPermissions = docPermissionService.findByDocId(docId);
@@ -224,6 +231,8 @@ public class DocService {
         }
         String downloadFilePath = docDir+doc.getDownloadUrl();
         String fileName = doc.getDocName();
+        doc.setDownloads(doc.getDownloads()+1);
+        docRepository.save(doc);
 
         File file = new File(downloadFilePath);
         if (file.exists())
@@ -284,7 +293,7 @@ public class DocService {
      * @param himself 是否是获取他所上传的文件列表
      * @return
      */
-     public String getDocList(Long userId,Boolean himself)
+     public String getDocList(Long userId,Boolean himself,String token)
      {
          List<Doc> docListVisual = new ArrayList<>();
          if (himself==true)//如果是查自己上传的文件
@@ -321,41 +330,18 @@ public class DocService {
              }
          }
 
+         String strDateFormat = "yyyy-MM-dd HH:mm:ss";
+         SimpleDateFormat sdf = new SimpleDateFormat(strDateFormat);
          JSONArray array = new JSONArray();
          if (docListVisual.size()!=0)
          {
-            for (Doc doc:docListVisual)
+            for (int i = 0; i < docListVisual.size(); i++)
             {
-                JSONObject object = new JSONObject();
-                object.put("docName",doc.getDocName());
-                object.put("docId",doc.getId());
-                object.put("uploadUser",userService.findByUserId(userId).getUsername());
-                object.put("date",doc.getDate().toString());
-                object.put("downloads",doc.getDownloads());
-                object.put("category",docCategoryRepository.findById(doc.getCategoryId()).get());
-                object.put("type",doc.getType());
-                object.put("downloadUrl",doc.getDownloadUrl());
-                object.put("previewUrl",doc.getPreviewUrl()==null? "":doc.getPreviewUrl());
-                object.put("open",doc.getOpen());
-                if (doc.getOpen()==0)
-                {
-                    StringBuffer stringBuffer = new StringBuffer();
-                    for (DocPermission docPermission:docPermissionRepository.findByDocId(doc.getId()))
-                    {
-                        Map<String,Long> map = UsuallyUtil.parseDepartmentRoleId(docPermission.getDepartmentRoleId());
-                        Long departmentId = map.get("departmentId");
-                        Long roleId = map.get("roleId");
-                        if (departmentId!=null)
-                            stringBuffer.append(departmentsService.findDepartmentById(departmentId).getName());
-                        if (roleId!=null)
-                            stringBuffer.append(roleService.findRoleById(roleId).getName());
-                        stringBuffer.append(" ");
-                    }
-                    object.put("permission",stringBuffer.toString());
-                }
-                else
-                    object.put("permission","");
-                array.add(object);
+                Doc doc = docListVisual.get(i);
+                doc.setPreviewUrl("http://127.0.0.1:8082/preview?token="+token+"&name="+doc.getPreviewUrl());
+                doc.setDownloadUrl("http://127.0.0.1:8082/downloadDoc?token="+token+"&docId="+doc.getId());
+                doc.setUploadDate(sdf.format(doc.getDate()));
+                array.add(JSON.toJSON(doc));
             }
              return array.toJSONString();
          }
@@ -363,5 +349,62 @@ public class DocService {
              return null;
      }
 
+    /**
+     * 删除文件
+     * @param docId
+     * @param userId
+     * @return
+     */
+     public Map<String,Object> deleteDoc(Long docId,Long userId)
+     {
+         Map<String,Object> map = new HashMap<>();
+        Doc doc = docRepository.findById(docId).get();
+        if (doc.getUploadUserid()!=userId)
+        {
+            map.put("code",ResponseType.Error);
+            map.put("msg","无删除该文件的权限");
+            return map;
+        }
+        File file = new File(docDir+doc.getDownloadUrl());
+        if (file.exists())
+            file.delete();
+        if (doc.getType().equals("office文档"))
+        {
+            File file1 = new File(docDir+doc.getPreviewUrl());
+            if (file1.exists())
+                file1.delete();
+        }
+        docRepository.delete(doc);
+         map.put("code",ResponseType.Success);
+         map.put("msg","删除成功");
+         return map;
+     }
+
+    /**
+     * 根据文件类别进行文件统计
+     * @return
+     */
+     public String getDocReportByCategory()
+     {
+         Map<String,Object> map = new HashMap<>();
+         List<DocCategory> categories = docCategoryRepository.findAll();
+         JSONArray array = new JSONArray();
+         for (int i=0;i<categories.size();i++)
+         {
+             JSONObject object = new JSONObject();
+             DocCategory docCategory = categories.get(i);
+             List<Doc> docs = docRepository.findByCategoryId(docCategory.getId());
+             int downloads = 0;
+             for (int j=0;j<docs.size();j++)
+             {
+                 downloads += docs.get(j).getDownloads();
+             }
+             object.put("name",docCategory.getName());
+             object.put("downloads",downloads);
+             object.put("count",docs.size());
+             array.add(object);
+         }
+         return array.toJSONString();
+     }
 
 }

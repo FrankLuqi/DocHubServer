@@ -39,7 +39,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         System.out.println(httpServletRequest.getRequestURL());
         String url = httpServletRequest.getRequestURL().toString().substring(httpServletRequest.getRequestURL().toString().lastIndexOf("/")+1);
         String token = httpServletRequest.getParameter("token");
-        if ("uploadDoc".equals(url))
+        if ("uploadDoc".equals(url)||"uploadUserface".equals(url))
             token = httpServletRequest.getParameterMap().get("token")[0];
         if (token!=null)
         {

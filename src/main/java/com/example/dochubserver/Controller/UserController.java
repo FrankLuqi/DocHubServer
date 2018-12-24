@@ -1,9 +1,15 @@
 package com.example.dochubserver.Controller;
 import com.example.dochubserver.async.AsyncTask;
+import com.example.dochubserver.utils.UsuallyUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.concurrent.Future;
 
 
@@ -13,6 +19,13 @@ public class UserController {
 
     @Autowired
     AsyncTask asyncTask;
+
+    @Value("${com.DOMAIN}")
+    private String DOMAIN;
+
+
+    @Value("${com.docDir}")
+    private String docDir;
 
     /**
      * 注册
@@ -51,6 +64,96 @@ public class UserController {
         }catch (Exception e)
         {
             return "错误"+e.getMessage();
+        }
+    }
+
+    @PostMapping(value = "/getUsers")
+    @ResponseBody
+    public String getUser(HttpServletRequest request)
+    {
+        Future<String> future = asyncTask.getUser();
+        try {
+            return future.get();
+        }catch (Exception e)
+        {
+            return "错误"+e.getMessage();
+        }
+    }
+
+    @PostMapping(value = "/addOwendRole")
+    @ResponseBody
+    public String addOwendRole(HttpServletRequest request)
+    {
+        String userId = request.getParameter("userId");
+        String departmentId = request.getParameter("departmentId");
+        String roleId = request.getParameter("roleId");
+        Future<String> future = asyncTask.addOwnedRole(userId,departmentId,roleId);
+        try {
+            return future.get();
+        }catch (Exception e)
+        {
+            return "错误"+e.getMessage();
+        }
+    }
+
+    @PostMapping(value = "/deleteOwendRole")
+    @ResponseBody
+    public String deleteOwendRole(HttpServletRequest request)
+    {
+        String owendRoleId = request.getParameter("owendRoleId");
+        Future<String> future = asyncTask.deleteOwnedRole(owendRoleId);
+        try {
+            return future.get();
+        }catch (Exception e)
+        {
+            return "错误"+e.getMessage();
+        }
+    }
+
+    @PostMapping(value = "/deleteUser")
+    @ResponseBody
+    public String deleteUser(HttpServletRequest request)
+    {
+        String userId = request.getParameter("userId");
+        Future<String> future = asyncTask.deleteUser(userId);
+        try {
+            return future.get();
+        }catch (Exception e)
+        {
+            return "错误"+e.getMessage();
+        }
+    }
+
+    /**
+     * 修改用户头像
+     * @param request
+     * @return
+     */
+    @PostMapping(value = "/uploadUserface")
+    @ResponseBody
+    public String uploadUserface(HttpServletRequest request)
+    {
+        Long userId = Long.parseLong((String)request.getAttribute("userId"));
+        Future<String> future = asyncTask.uoloadUserface(request,userId);
+        try {
+            return future.get();
+        }catch (Exception e)
+        {
+            return "错误"+e.getMessage();
+        }
+    }
+
+
+    @RequestMapping("/userface")
+    public void getImage(@RequestParam("name") String name, HttpServletResponse response)
+    {
+        try{
+            int dotpos = name.lastIndexOf(".");
+            String fileext = name.substring(dotpos+1).toLowerCase();
+            File file = new File(docDir+name);
+            StreamUtils.copy(new FileInputStream(file),response.getOutputStream());
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 

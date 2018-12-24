@@ -117,7 +117,7 @@ public class DepartmentsService {
             }
             map.put("code","Success");
             if (childrenName.toString().equals(""))
-                map.put("msg","删除成功，具有该部门角色的用户该部门角色也已被删除");
+                map.put("msg","删除成功，具有该部门角色的用户其部门角色也已被删除");
             else
                 map.put("msg","删除成功，具有该部门角色的用户该部门角色也已被删除，以下子节点也被删除 "+childrenName);
         }catch (Exception e)

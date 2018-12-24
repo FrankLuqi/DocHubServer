@@ -21,5 +21,5 @@ public interface OwnedRoleRepository extends JpaRepository<OwnedRole,Long> {
     public List<OwnedRole> findByDepartmentId(@Param("DId") String DId);
 
     //根据用户id和部门角色id进行查找，防止给一个用户重复添加部门角色
-    public List<OwnedRole> findByUserIdAndDepartmentRoleId(Long userId,String departmentRoleId);
+    public OwnedRole findByUserIdAndDepartmentRoleId(Long userId,String departmentRoleId);
 }
